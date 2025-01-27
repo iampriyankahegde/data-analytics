@@ -1,0 +1,498 @@
+Data Acquisition
+Importing Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+# Load the data
+df = pd.read_csv('adult.csv')
+df.head()
+age	workclass	fnlwgt	education	education.num	marital.status	occupation	relationship	race	sex	capital.gain	capital.loss	hours.per.week	native.country	income
+0	90	?	77053	HS-grad	9	Widowed	?	Not-in-family	White	Female	0	4356	40	United-States	<=50K
+1	82	Private	132870	HS-grad	9	Widowed	Exec-managerial	Not-in-family	White	Female	0	4356	18	United-States	<=50K
+2	66	?	186061	Some-college	10	Widowed	?	Unmarried	Black	Female	0	4356	40	United-States	<=50K
+3	54	Private	140359	7th-8th	4	Divorced	Machine-op-inspct	Unmarried	White	Female	0	3900	40	United-States	<=50K
+4	41	Private	264663	Some-college	10	Separated	Prof-specialty	Own-child	White	Female	0	3900	40	United-States	<=50K
+Data exploration
+# Check the dimensions (number of rows and columns) of the DataFrame
+df.shape
+(32561, 15)
+# Displaying descriptive statistics of numerical columns in the DataFrame
+df.describe()
+age	fnlwgt	education.num	capital.gain	capital.loss	hours.per.week
+count	32561.000000	3.256100e+04	32561.000000	32561.000000	32561.000000	32561.000000
+mean	38.581647	1.897784e+05	10.080679	1077.648844	87.303830	40.437456
+std	13.640433	1.055500e+05	2.572720	7385.292085	402.960219	12.347429
+min	17.000000	1.228500e+04	1.000000	0.000000	0.000000	1.000000
+25%	28.000000	1.178270e+05	9.000000	0.000000	0.000000	40.000000
+50%	37.000000	1.783560e+05	10.000000	0.000000	0.000000	40.000000
+75%	48.000000	2.370510e+05	12.000000	0.000000	0.000000	45.000000
+max	90.000000	1.484705e+06	16.000000	99999.000000	4356.000000	99.000000
+# Display basic information about the dataset
+df.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 32561 entries, 0 to 32560
+Data columns (total 15 columns):
+ #   Column          Non-Null Count  Dtype 
+---  ------          --------------  ----- 
+ 0   age             32561 non-null  int64 
+ 1   workclass       32561 non-null  object
+ 2   fnlwgt          32561 non-null  int64 
+ 3   education       32561 non-null  object
+ 4   education.num   32561 non-null  int64 
+ 5   marital.status  32561 non-null  object
+ 6   occupation      32561 non-null  object
+ 7   relationship    32561 non-null  object
+ 8   race            32561 non-null  object
+ 9   sex             32561 non-null  object
+ 10  capital.gain    32561 non-null  int64 
+ 11  capital.loss    32561 non-null  int64 
+ 12  hours.per.week  32561 non-null  int64 
+ 13  native.country  32561 non-null  object
+ 14  income          32561 non-null  object
+dtypes: int64(6), object(9)
+memory usage: 3.7+ MB
+#Counts the frequency of each income category in the 'income' column of the DataFrame 'df'
+df['income'].value_counts()
+income
+<=50K    24720
+>50K      7841
+Name: count, dtype: int64
+# Count occurrences of each value in 'sex' column
+df['sex'].value_counts()
+sex
+Male      21790
+Female    10771
+Name: count, dtype: int64
+# Count the occurrences of each country in the 'native.country' column
+df['native.country'].value_counts()
+native.country
+United-States                 29170
+Mexico                          643
+?                               583
+Philippines                     198
+Germany                         137
+Canada                          121
+Puerto-Rico                     114
+El-Salvador                     106
+India                           100
+Cuba                             95
+England                          90
+Jamaica                          81
+South                            80
+China                            75
+Italy                            73
+Dominican-Republic               70
+Vietnam                          67
+Guatemala                        64
+Japan                            62
+Poland                           60
+Columbia                         59
+Taiwan                           51
+Haiti                            44
+Iran                             43
+Portugal                         37
+Nicaragua                        34
+Peru                             31
+Greece                           29
+France                           29
+Ecuador                          28
+Ireland                          24
+Hong                             20
+Cambodia                         19
+Trinadad&Tobago                  19
+Laos                             18
+Thailand                         18
+Yugoslavia                       16
+Outlying-US(Guam-USVI-etc)       14
+Hungary                          13
+Honduras                         13
+Scotland                         12
+Holand-Netherlands                1
+Name: count, dtype: int64
+# Count the occurrences of each category in the 'workclass' column
+df['workclass'].value_counts()
+workclass
+Private             22696
+Self-emp-not-inc     2541
+Local-gov            2093
+?                    1836
+State-gov            1298
+Self-emp-inc         1116
+Federal-gov           960
+Without-pay            14
+Never-worked            7
+Name: count, dtype: int64
+# Count the occurrences of each unique value in the 'occupation' column
+df['occupation'].value_counts()
+occupation
+Prof-specialty       4140
+Craft-repair         4099
+Exec-managerial      4066
+Adm-clerical         3770
+Sales                3650
+Other-service        3295
+Machine-op-inspct    2002
+?                    1843
+Transport-moving     1597
+Handlers-cleaners    1370
+Farming-fishing       994
+Tech-support          928
+Protective-serv       649
+Priv-house-serv       149
+Armed-Forces            9
+Name: count, dtype: int64
+Data cleaning
+Dropping Education- Education No. is enough, Final Weight- Highly Discrete Data so not useful
+df = df.drop(['education', 'fnlwgt'], axis = 1)
+df.head(1)
+age	workclass	education.num	marital.status	occupation	relationship	race	sex	capital.gain	capital.loss	hours.per.week	native.country	income
+0	90	?	9	Widowed	?	Not-in-family	White	Female	0	4356	40	United-States	<=50K
+Replacing ? with NaN
+# Replace '?' with NaN
+df.replace('?', np.NaN,inplace = True)
+df.head()
+age	workclass	education.num	marital.status	occupation	relationship	race	sex	capital.gain	capital.loss	hours.per.week	native.country	income
+0	90	NaN	9	Widowed	NaN	Not-in-family	White	Female	0	4356	40	United-States	<=50K
+1	82	Private	9	Widowed	Exec-managerial	Not-in-family	White	Female	0	4356	18	United-States	<=50K
+2	66	NaN	10	Widowed	NaN	Unmarried	Black	Female	0	4356	40	United-States	<=50K
+3	54	Private	4	Divorced	Machine-op-inspct	Unmarried	White	Female	0	3900	40	United-States	<=50K
+4	41	Private	10	Separated	Prof-specialty	Own-child	White	Female	0	3900	40	United-States	<=50K
+Replacing NaN with Forward Fill
+#Forward fill NaN values in the DataFrame
+df.ffill(inplace=True)
+df.head()
+age	workclass	education.num	marital.status	occupation	relationship	race	sex	capital.gain	capital.loss	hours.per.week	native.country	income
+0	90	NaN	9	Widowed	NaN	Not-in-family	White	Female	0	4356	40	United-States	<=50K
+1	82	Private	9	Widowed	Exec-managerial	Not-in-family	White	Female	0	4356	18	United-States	<=50K
+2	66	Private	10	Widowed	Exec-managerial	Unmarried	Black	Female	0	4356	40	United-States	<=50K
+3	54	Private	4	Divorced	Machine-op-inspct	Unmarried	White	Female	0	3900	40	United-States	<=50K
+4	41	Private	10	Separated	Prof-specialty	Own-child	White	Female	0	3900	40	United-States	<=50K
+Drop rows with missing values (NaN) from the DataFrame
+df.dropna(inplace=True)
+df.head()
+age	workclass	education.num	marital.status	occupation	relationship	race	sex	capital.gain	capital.loss	hours.per.week	native.country	income
+1	82	Private	9	Widowed	Exec-managerial	Not-in-family	White	Female	0	4356	18	United-States	<=50K
+2	66	Private	10	Widowed	Exec-managerial	Unmarried	Black	Female	0	4356	40	United-States	<=50K
+3	54	Private	4	Divorced	Machine-op-inspct	Unmarried	White	Female	0	3900	40	United-States	<=50K
+4	41	Private	10	Separated	Prof-specialty	Own-child	White	Female	0	3900	40	United-States	<=50K
+5	34	Private	9	Divorced	Other-service	Unmarried	White	Female	0	3770	45	United-States	<=50K
+Label Encoding Categorical Variables
+Convert categorical variables to numeric using LabelEncoder
+#Replaces the original text labels with numerical labels using the LabelEncoder
+le = LabelEncoder()
+categorical_columns = ['workclass', 'marital.status', 'occupation', 'relationship', 'race', 'sex', 'native.country', 'income']
+
+for column in categorical_columns:
+    df[column] = le.fit_transform(df[column])
+print("Cleaned Dataset Information:")
+print(df.info())
+Cleaned Dataset Information:
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 32561 entries, 0 to 32560
+Data columns (total 13 columns):
+ #   Column          Non-Null Count  Dtype
+---  ------          --------------  -----
+ 0   age             32561 non-null  int64
+ 1   workclass       32561 non-null  int32
+ 2   education.num   32561 non-null  int64
+ 3   marital.status  32561 non-null  int32
+ 4   occupation      32561 non-null  int32
+ 5   relationship    32561 non-null  int32
+ 6   race            32561 non-null  int32
+ 7   sex             32561 non-null  int32
+ 8   capital.gain    32561 non-null  int64
+ 9   capital.loss    32561 non-null  int64
+ 10  hours.per.week  32561 non-null  int64
+ 11  native.country  32561 non-null  int32
+ 12  income          32561 non-null  int32
+dtypes: int32(8), int64(5)
+memory usage: 2.2 MB
+None
+#encodes specific categorical columns in the DataFrame, transforming them from text labels to numerical labels
+le = LabelEncoder()
+df['workclass'] = le.fit_transform(df['workclass'])
+df['marital.status'] = le.fit_transform(df['marital.status'])
+df['occupation'] = le.fit_transform(df['occupation'])
+df['relationship'] = le.fit_transform(df['relationship'])
+df['race'] = le.fit_transform(df['race'])
+df['sex'] = le.fit_transform(df['sex'])
+df['native.country'] = le.fit_transform(df['native.country'])
+df['income'] = le.fit_transform(df['income'])
+
+df.head()
+age	workclass	education.num	marital.status	occupation	relationship	race	sex	capital.gain	capital.loss	hours.per.week	native.country	income
+0	90	8	9	6	14	1	4	0	0	4356	40	38	0
+1	82	3	9	6	3	1	4	0	0	4356	18	38	0
+2	66	3	10	6	3	4	2	0	0	4356	40	38	0
+3	54	3	4	0	6	4	4	0	0	3900	40	38	0
+4	41	3	10	5	9	3	4	0	0	3900	40	38	0
+Exploratory data analyis
+Descriptive Statistics for Numeric Columns
+#calculates summary statistics for the numerical columns in the DataFrame
+numeric_stats = df.describe()
+print("Descriptive Statistics for Numeric Columns:")
+print(numeric_stats)
+Descriptive Statistics for Numeric Columns:
+                age     workclass  education.num  marital.status  \
+count  32561.000000  32561.000000   32561.000000    32561.000000   
+mean      38.581647      3.102761      10.080679        2.611836   
+std       13.640433      1.136995       2.572720        1.506222   
+min       17.000000      0.000000       1.000000        0.000000   
+25%       28.000000      3.000000       9.000000        2.000000   
+50%       37.000000      3.000000      10.000000        2.000000   
+75%       48.000000      3.000000      12.000000        4.000000   
+max       90.000000      8.000000      16.000000        6.000000   
+
+         occupation  relationship          race           sex  capital.gain  \
+count  32561.000000  32561.000000  32561.000000  32561.000000  32561.000000   
+mean       5.967108      1.446362      3.665858      0.669205   1077.648844   
+std        4.025021      1.606771      0.848806      0.470506   7385.292085   
+min        0.000000      0.000000      0.000000      0.000000      0.000000   
+25%        2.000000      0.000000      4.000000      0.000000      0.000000   
+50%        6.000000      1.000000      4.000000      1.000000      0.000000   
+75%        9.000000      3.000000      4.000000      1.000000      0.000000   
+max       14.000000      5.000000      4.000000      1.000000  99999.000000   
+
+       capital.loss  hours.per.week  native.country        income  
+count  32561.000000    32561.000000    32561.000000  32561.000000  
+mean      87.303830       40.437456       36.388901      0.240810  
+std      402.960219       12.347429        6.110988      0.427581  
+min        0.000000        1.000000        0.000000      0.000000  
+25%        0.000000       40.000000       38.000000      0.000000  
+50%        0.000000       40.000000       38.000000      0.000000  
+75%        0.000000       45.000000       38.000000      0.000000  
+max     4356.000000       99.000000       40.000000      1.000000  
+Analyzing the Distribution of 'education.num'
+#provides valuable insights into the distribution of education levels among adults
+education_num_counts = df['education.num'].value_counts()
+print("\nValue Counts for 'education.num':")
+print(education_num_counts)
+Value Counts for 'education.num':
+education.num
+9     10501
+10     7291
+13     5355
+14     1723
+11     1382
+7      1175
+12     1067
+6       933
+4       646
+15      576
+5       514
+8       433
+16      413
+3       333
+2       168
+1        51
+Name: count, dtype: int64
+Create a contingency table to explore the relationship between 'sex' and 'income'
+#explore the relationship between 'sex' and 'income'
+cross_tab_sex_income = pd.crosstab(df['sex'], df['income'])
+print("\nCross-tabulation for 'sex' and 'income':")
+print(cross_tab_sex_income)
+Cross-tabulation for 'sex' and 'income':
+income      0     1
+sex                
+0        9592  1179
+1       15128  6662
+Explore the relationship between race and income categories
+#relationship between race and income categories
+cross_tab_race_income = pd.crosstab(df['race'], df['income'])
+print("\nCross-tabulation for 'race' and 'income':")
+print(cross_tab_race_income)
+Cross-tabulation for 'race' and 'income':
+income      0     1
+race               
+0         275    36
+1         763   276
+2        2737   387
+3         246    25
+4       20699  7117
+Calculate and Display Correlation Matrix for Numeric Columns
+#revealing how the numeric columns in the data are statistically related to each other. 
+#-1: Perfect negative correlation(as one variable increases, the other decreases perfectly)
+#0: No linear relationship
+#+1: Perfect positive correlation(as one variable increases, the other increases perfectly)
+correlation_matrix = df.corr()
+print("\nCorrelation Matrix for Numeric Columns:")
+print(correlation_matrix)
+Correlation Matrix for Numeric Columns:
+                     age  workclass  education.num  marital.status  \
+age             1.000000   0.041358       0.036527       -0.266288   
+workclass       0.041358   1.000000       0.000252       -0.017704   
+education.num   0.036527   0.000252       1.000000       -0.069304   
+marital.status -0.266288  -0.017704      -0.069304        1.000000   
+occupation     -0.006201   0.010604       0.083740        0.022352   
+relationship   -0.263698  -0.054965      -0.094153        0.185451   
+race            0.028718   0.045445       0.031838       -0.068013   
+sex             0.088832   0.067850       0.012280       -0.129314   
+capital.gain    0.077674   0.031075       0.122630       -0.043393   
+capital.loss    0.057775   0.005134       0.079923       -0.034187   
+hours.per.week  0.068756   0.035189       0.148123       -0.190519   
+native.country -0.001124  -0.001473       0.089082       -0.022949   
+income          0.234037   0.000774       0.335154       -0.199307   
+
+                occupation  relationship      race       sex  capital.gain  \
+age              -0.006201     -0.263698  0.028718  0.088832      0.077674   
+workclass         0.010604     -0.054965  0.045445  0.067850      0.031075   
+education.num     0.083740     -0.094153  0.031838  0.012280      0.122630   
+marital.status    0.022352      0.185451 -0.068013 -0.129314     -0.043393   
+occupation        1.000000     -0.048752 -0.000745  0.056935      0.020328   
+relationship     -0.048752      1.000000 -0.116055 -0.582454     -0.057919   
+race             -0.000745     -0.116055  1.000000  0.087204      0.011145   
+sex               0.056935     -0.582454  0.087204  1.000000      0.048480   
+capital.gain      0.020328     -0.057919  0.011145  0.048480      1.000000   
+capital.loss      0.013522     -0.061062  0.018899  0.045567     -0.031615   
+hours.per.week    0.014640     -0.248974  0.041910  0.229309      0.078409   
+native.country   -0.003344     -0.010364  0.119375  0.000511      0.009212   
+income            0.048913     -0.250918  0.071846  0.215980      0.223329   
+
+                capital.loss  hours.per.week  native.country    income  
+age                 0.057775        0.068756       -0.001124  0.234037  
+workclass           0.005134        0.035189       -0.001473  0.000774  
+education.num       0.079923        0.148123        0.089082  0.335154  
+marital.status     -0.034187       -0.190519       -0.022949 -0.199307  
+occupation          0.013522        0.014640       -0.003344  0.048913  
+relationship       -0.061062       -0.248974       -0.010364 -0.250918  
+race                0.018899        0.041910        0.119375  0.071846  
+sex                 0.045567        0.229309        0.000511  0.215980  
+capital.gain       -0.031615        0.078409        0.009212  0.223329  
+capital.loss        1.000000        0.054256        0.009240  0.150526  
+hours.per.week      0.054256        1.000000        0.004796  0.229689  
+native.country      0.009240        0.004796        1.000000  0.024103  
+income              0.150526        0.229689        0.024103  1.000000  
+Data Visualization
+Line plot for Average Income by Work Class
+workclass_data = df.groupby('workclass')['income'].mean()  # Calculate average income by workclass
+dark_skyblue1 = '#4299d4'
+# Create the line plot with informative title and labels
+sns.lineplot(
+    x=workclass_data.index,
+    y=workclass_data.values,
+    marker='o',  # Add markers for better visibility
+    color=dark_skyblue1  # Choose a visually appealing color
+)
+plt.title('Average Income by Work Class', fontsize=14)
+plt.xlabel('Work Class', fontsize=12)
+plt.ylabel('Average Income', fontsize=12)
+
+# Improve display
+plt.grid(axis='y', linestyle='--', alpha=1.0)
+plt.tight_layout()
+plt.show()
+No description has been provided for this image
+Scatter Plot for Capital Loss vs. Hours Worked per Week by Income
+sns.scatterplot(
+    x="capital.loss",  
+    y="hours.per.week",
+    hue="income", 
+    palette="viridis",  
+    data=df,
+    alpha=0.7,  
+    size="age", 
+)
+
+plt.title("Capital Loss vs. Hours Worked per Week by Income", fontsize=14)
+plt.xlabel("Capital Loss", fontsize=12) 
+plt.ylabel("Hours Worked per Week", fontsize=12)
+plt.grid(axis="y", linestyle="--", alpha=0.7)
+plt.legend(title="Income", loc="upper right", fontsize=8) 
+
+# Improved display
+plt.tight_layout()
+plt.show()
+No description has been provided for this image
+Barplot for 'income' vs 'age'
+sns.barplot(x = 'income', y = 'age', hue='income', data = df, palette=custom_palette)
+plt.legend(title="Income", loc='upper left', fontsize=9) 
+<matplotlib.legend.Legend at 0x268c94e8e60>
+No description has been provided for this image
+Histogram for 'age'
+plt.figure(figsize=(12, 7))
+
+sns.histplot(
+    df['age'], bins=30, kde=True, color="coral", alpha=1.0 , label="Age Distribution")
+
+# Customize plot elements
+plt.title("Distribution of Age", fontsize=16)
+plt.xlabel("Age", fontsize=14)
+plt.ylabel("Frequency", fontsize=14)
+plt.grid(axis="y", linestyle="--", alpha=0.7)
+plt.legend()
+plt.tight_layout()
+plt.show()
+No description has been provided for this image
+Histogram for 'education.num'
+plt.figure(figsize=(12, 7))
+sns.histplot(
+    df["education.num"],
+    bins=20,
+    kde=True,
+    color="coral",  # Or any other desired color
+    alpha=1.0,
+    label="Education Level Distribution",
+)
+plt.title("Distribution of Education Level", fontsize=16)
+plt.xlabel("Education Years", fontsize=14)
+plt.ylabel("Frequency", fontsize=14)
+plt.grid(axis="y", linestyle="--", alpha=0.7)
+plt.legend()
+<matplotlib.legend.Legend at 0x268c97fc1a0>
+No description has been provided for this image
+Count plot for 'race'
+plt.figure(figsize=(12, 7))
+
+sns.countplot(
+    x="race", hue="income", data=df, palette="Set2", edgecolor="white", linewidth=0.5
+)
+plt.title("Income Distribution by Race", fontsize=16)
+plt.xlabel("Race", fontsize=14)
+plt.ylabel("Count", fontsize=14)
+plt.grid(axis="y", linestyle="--", alpha=0.7)
+plt.legend(title="Income Level", loc="upper left")  # Move legend inside plot
+
+plt.tight_layout()
+plt.show()
+No description has been provided for this image
+Count Plot for 'Relationship status'
+plt.figure(figsize=(12, 7))
+sns.countplot(
+    x="relationship", hue="income", data=df, palette="Set2", edgecolor="white", linewidth=0.5
+)
+plt.title("Income Distribution by Relationship Status", fontsize=16)
+plt.xlabel("Relationship Status", fontsize=14)
+plt.ylabel("Count", fontsize=14)
+plt.grid(axis="y", linestyle="--", alpha=0.7)
+plt.legend(title="Income Level", loc="upper right")  # Move legend inside plot
+plt.tight_layout()
+plt.show()
+No description has been provided for this image
+Box plot for 'hours.per.week'
+plt.figure(figsize=(12, 7))
+
+# Create the boxplot with hue assignment and suppressed legend
+sns.boxplot(
+    x="income",
+    y="hours.per.week",
+    hue="income",  # Assign x variable to hue
+    data=df,
+    palette=custom_palette,  # Example color palette
+    legend=False,  # Suppress legend since hue is redundant with x-axis
+)
+
+# Customize plot elements
+plt.title("Income by Hours Worked per Week", fontsize=16)
+plt.xlabel("Income", fontsize=14)
+plt.ylabel("Hours Worked per Week", fontsize=14)
+plt.grid(axis="y", linestyle="--", alpha=0.7)
+
+# Improved display
+plt.tight_layout()
+plt.show()
+No description has been provided for this image
+ 
